@@ -1,0 +1,67 @@
+public static searchVO  commList(int pageUnit, int pageSize, int pageIndex, int total	, searchVO svo) {
+	
+		//출력페이지의 시작번호
+		int recordCountPerPage = total-(pageIndex-1)*pageUnit;
+		
+		//sql적용할 시작번호 및 마지막 번호
+		int firstIndex = (pageIndex-1)*pageUnit + 1;
+		int lastIndex = firstIndex + (pageUnit -1);
+		
+		//출력페이지의 페이징 시작(1), 끝번호(10)
+		int pageStartNo = (int)Math.floor((double)(pageIndex-1)/pageSize)*pageSize+1;
+		
+		
+		int pageLastNo= pageStartNo+(pageSize-1);
+		
+		//전체 페이지 수(=마지막 페이지 번호 동일)
+		int totalPageCnt = (int)Math.ceil((double)total/pageUnit);
+		// 하단 출력 페이지 갯수(10)가 원래 페이지 갯수(2) 보다 많을 경우 원래 페이지 겟수만 표출한다. 
+		if(totalPageCnt < pageLastNo ) pageLastNo = totalPageCnt;
+		
+		//변수를 vo에 저장
+		svo.setRecordCountPerPage(recordCountPerPage);
+		svo.setFirstIndex(firstIndex);
+		svo.setLastIndex(lastIndex);
+		svo.setPageLastNo(pageLastNo);
+		svo.setPageStartNo(pageStartNo);
+		svo.setTotalPageCnt(totalPageCnt);
+		
+		return svo;		
+		
+		}
+
+  // 페이징 관련 변수 설정
+	    int pageIndex = setPageIndex(svo);
+	    int pageUnit = propertiesService.getInt("pageUnit");
+	    int pageSize = propertiesService.getInt("pageSize");
+	    int total = boardService.answerSelectTotal(svo);
+	    svo = commList(pageUnit, pageSize, pageIndex, total, svo);
+
+//화면 jsp 파일 - 페이징 처리
+<div class="pagging" id="pagging">
+	    <c:set var="before" value="${svo.pageStartNo - 1}"/>
+	    <c:set var="next" value="${svo.pageLastNo + 1}"/>	
+	    
+	    <c:if test="${svo.pageIndex != 1 }">
+	    <a href="#" onclick="page_load1(1)">[처음]</a> 
+	    </c:if>
+	    <c:if test="${before > 0}">
+	        <a href="#" onclick="page_load1('${before}')">[이전]</a> 
+	    </c:if>
+	    
+	    <c:forEach var="p" begin="${svo.pageStartNo}" end="${svo.pageLastNo}">
+	        <c:if test="${p != svo.pageIndex}">
+	            <a href="#" onclick="page_load1('${p}')">${p}</a>
+	        </c:if>
+	        <c:if test="${p == svo.pageIndex}">
+	            <span style="font-weight:bold; color:red;">${p}</span>
+	        </c:if> 
+	    </c:forEach> 
+	    
+	    <c:if test="${next < svo.totalPageCnt}">
+	        <a href="#" onclick="page_load1('${next}')">[다음]</a>
+	    </c:if>
+	    <c:if test="${svo.pageIndex != svo.totalPageCnt }">
+	    <a href="#" onclick="page_load1('${svo.totalPageCnt}')">[마지막]</a>
+	    </c:if>
+	</div>
