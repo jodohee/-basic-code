@@ -1,0 +1,39 @@
+//초기 설정 1페이지
+$(document).ready(function(){
+    // 초기 페이지 로딩 시 AJAX 요청을 보냅니다.
+    $.ajax({
+        url: 'answerList.do', // 데이터를 가져올 URL
+        type: 'GET',
+        dataType: 'html', // 가져올 데이터 형식
+        success: function(response) {
+            // 성공적으로 데이터를 가져왔을 때, 해당 데이터를 게시판 컨텐츠에 추가합니다.
+            $('#answerpage_content').html(response);
+        },
+        error: function(xhr, status, error) {
+            // 데이터를 가져오지 못했을 때의 처리
+            console.error('Failed to load initial page data:', error);
+        }
+    });
+});
+
+function page_load1(pageNumber) {
+    // 현재 스크롤 위치를 저장합니다.
+    var scrollTop = window.scrollY;
+    
+    // AJAX를 통해 해당 페이지의 내용을 가져와서 content div에 업데이트
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', 'answerList.do?pageIndex=' + pageNumber , true);
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var answerContentDiv = document.getElementById('answerpage_content');
+            // 기존 내용을 제거합니다.
+            answerContentDiv.innerHTML = '';
+            // 새로운 페이지의 내용을 추가합니다.
+            answerContentDiv.innerHTML = xhr.responseText;
+            
+            // 페이지 내용이 업데이트된 후에 스크롤 위치를 변경합니다.
+            window.scrollTo(0, scrollTop);
+        }
+    };
+    xhr.send();
+}
