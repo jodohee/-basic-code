@@ -1,0 +1,44 @@
+//파일 저장 경로 지정 해두기 - 
+String path = propertiesService.getString("filePath1");
+		// 올라온 파일을 Map 담는 작업
+		Map<String, MultipartFile> files = multiRequest.getFileMap();
+		// Map 형식으로 저장된 파일을 Iterator 클래스 형식으로 정보화 하는 작업
+		Iterator<Entry<String, MultipartFile>> itr = files.entrySet().iterator();
+		
+		String str = "";
+		Calendar cal = Calendar.getInstance();
+		int cnt = 1;
+		
+		// 파일의 존재 유무
+		while( itr.hasNext() ) {
+			// 특정 파일 위치로 포인터를 옮기는 작업
+			Entry<String, MultipartFile> entry = itr.next();
+			// 포인터의 위치에서 파일의 모든 정보를 가져온다.
+			MultipartFile file = entry.getValue();
+			// 파일의 정보들 중 파일의 원래 이름을 얻어온다.
+			String orgname = file.getOriginalFilename();
+			
+			if( orgname == null || orgname.equals("") ) {
+				//break;  // 즉시종료
+				continue; // 중단 후 다시 실행
+			}
+			String[] ext1 = orgname.split("\\.");
+			String   ext2 = ext1[ext1.length-1];
+			
+//unixtime을 이용한 랜덤한 파일 이름 설정
+			cal = Calendar.getInstance();
+			String uxt = cal.getTimeInMillis()+"";
+			uxt = uxt.substring(uxt.length()-7);
+			uxt += cnt;
+			
+			// 실제 저장 위치에 파일명을 연결하여 전체 경로를 완성한다.
+			String filename = uxt+"."+ext2; 
+			String filePath = path + "/" + filename;
+			// 서버의 공유(폴더) 공간에 있는 파일을 지정된 경로로 복사한다.
+
+			file.transferTo(new File(filePath));  // COPY 매소드(원본->복사)
+			str += filename+"／";
+			cnt++;
+		}
+		//  nata.jpg／aa.jpg／ 이미지파일이름 DB에 저장
+		vo.setRevfilename(str);
