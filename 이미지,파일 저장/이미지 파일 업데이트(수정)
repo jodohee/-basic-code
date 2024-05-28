@@ -1,0 +1,104 @@
+    // 저장 성공 번호
+		String result = "0";
+		// 반복분 횟수를 저장하는 변수
+		int    filecnt = 0; 
+		// 수정 처리 되는 파일명이 저장되는 초기 변수
+		// UPDATE SQL의  filename="값"을 설정하는 변수
+		String modifyFile = "";  // a1.jpg／b1.jpg／
+		
+		// JSON 타입으로의 리턴 값을 위한 객체 선언
+		ModelAndView mav = new ModelAndView("jsonView");
+		
+		// 파일 저장 위치 (절대경로)
+		String path = propertiesService.getString("filePath1");
+		
+		// 올라온 파일을 Map 담는 작업
+		Map<String, MultipartFile> files = multiRequest.getFileMap();
+		
+		// Map 형식으로 저장된 파일을 Iterator 클래스 형식으로 정보화 하는 작업
+		Iterator<Entry<String, MultipartFile>> itr = files.entrySet().iterator();
+
+		// 수정처리를 위해 저장된 파일명을 가져온다. 
+		ReviewVO vo1 = boardService.reviewSelectDetail(vo);
+	
+		String dbfile = vo1.getRevfilename();
+
+		if(dbfile == null) dbfile = "";
+		String[] dbfileArray = dbfile.split("／");
+
+		// 파일의 존재 유무
+		while( itr.hasNext() ) {
+
+			System.out.println("-- while --");
+			filecnt++;
+			if(filecnt == 5) break;
+			
+			// 특정 파일 위치로 포인터를 옮기는 작업
+			Entry<String, MultipartFile> entry = itr.next();
+			
+			// 포인터의 위치에서 파일의 모든 정보를 가져온다.
+			MultipartFile file = entry.getValue();
+				
+			String orgname = "";
+			try {
+				// 파일의 정보들 중 파일의 원래 이름을 얻어온다. 예) a1.jpg
+				orgname = file.getOriginalFilename();
+				// 파일이 안올라왔을 경우의 세팅
+				if( orgname == null || orgname.equals("")) {
+					if(dbfileArray[filecnt-1].length() > 0) {
+						// 올라온 파일이 없는 경우 DB에 있던 파일명을 도로 세팅한다.
+						modifyFile += dbfileArray[filecnt-1]+"／";
+					}
+					continue; // STOP AND RETRY
+				}			
+			} catch (Exception e) { continue; } 
+			
+			/*
+			 * 아래 설정은 파일이 올라왔을 경우의 설정
+			 */
+			
+			// 오리진 파일 명에서 확장자를 분리하는 작업, 예) a1.jpg -> "a1","jpg"
+			// 분리하는 구분자 중에 "." 은 원천적으로 사용불가이지만 "\\" 를 붙이면 사용가능
+			String[] ext1 = orgname.split("\\.");
+			String   ext2 = ext1[ext1.length-1];  // 확장자 얻음  예) jpg
+			
+			// 유니큐한 파일명을 얻기위한 작업 (유닉스타임 맨뒤 7자리를 이용함)
+			Calendar cal = Calendar.getInstance();
+			String uxt = cal.getTimeInMillis()+"";
+			uxt = uxt.substring(uxt.length()-7);
+			uxt += filecnt;
+			
+			// 유닉스타임으로 얻은 파일명에 확장자를 붙임
+			String filename = uxt+"."+ext2; 
+			// 물리적인 위치에 저장 처리를 하기위한 경로 설정
+			String filePath = path + "/" + filename;
+			
+			// 실제 저장처리되는 모습
+			file.transferTo(new File(filePath));
+			
+			// UPDATE SQL의  filename 값을 설정하는 부분
+			// 물리적 공간에 저장 처리된 파일명을 구분자와 같이 세팅한다. 
+			modifyFile += filename+"／";
+			
+			// 수정처리에서 물리적인 OLD 파일을 삭제하는 설정
+			try {
+				// DB에 저장된 filename이 공백이 아닌경우 (즉 파일이 있는 경우)의 체크
+				if (!dbfileArray[filecnt-1].equals("")) {
+					// 삭제 파일의 경로 설정
+					String del_filepath = path + "/" + dbfileArray[filecnt-1];
+					// 삭제 파일의 경로를 물리적 위치로 인식
+					// 물리적 위치 설정이 잘못되는 경우 에러를 발생시킴 (그래서 try설정 한것임)
+					File del_file = new File(del_filepath);
+					// 진짜 삭제
+					del_file.delete();
+				}
+			} catch (Exception e) { }
+			
+			System.out.println("filecnt : " + filecnt );
+		}
+		
+		vo.setRevfilename(modifyFile);
+
+//하단은 나머지 업데이트 처리하기
+
+
