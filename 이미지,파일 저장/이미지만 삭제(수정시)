@@ -1,0 +1,24 @@
+//수정 과정에서 이미지 파일 삭제시 
+ 
+// 파일 경로를 propertiesService에서 가져옴
+    String path = propertiesService.getString("filePath1");
+    
+    // ReviewVO 객체에서 고유 번호와 파일명을 가져옴
+    int unq = vo.getRevnum();
+    String filename = vo.getRevfilename();
+    
+    // 가져온 값을 로그로 출력하여 확인 (파일 삭제 시 필요 요소들)
+    System.out.println("unq :::::::: " + unq);
+    System.out.println("filename :::::::: " + filename);
+    
+    // 파일 삭제
+    // 파일 경로를 생성
+    String filePath = path + "/" + filename;
+    // 해당 경로의 파일 객체 생성
+    File file = new File(filePath);
+    // 파일이 존재하면 삭제
+    if (file.exists()) {
+        file.delete();
+    }
+
+    // 데이터베이스에서 파일명 필드를 업데이트
